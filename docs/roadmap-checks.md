@@ -9,7 +9,7 @@ for that capability rather than being forced into a regex.
 
 Priority: **P0** = do next, **P1** = solid value, **P2** = nice to have / revisit later.
 
-**Status (2026-07-31):** every "Fits today" check below across all six
+**Status (2026-07-31, complete):** every "Fits today" check below across all six
 categories was implemented in one batch (see
 `docs/superpowers/plans/2026-07-31-aint-check-expansion.md`), plus the
 claude-skills-sourced Swift checks further down this doc. `swift-print-statement`
