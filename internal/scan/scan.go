@@ -34,6 +34,9 @@ func Walk(paths []string, cfg config.Config) ([]Target, error) {
 			if info.IsDir() {
 				return nil
 			}
+			if info.Mode()&os.ModeSymlink != 0 {
+				return nil
+			}
 			ignoreCheck := path
 			if rel, relErr := filepath.Rel(root, path); relErr == nil && rel != "." {
 				ignoreCheck = rel

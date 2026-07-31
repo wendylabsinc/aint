@@ -83,6 +83,55 @@ func TestWalkIgnoresSingleFileRootByBasenamePattern(t *testing.T) {
 	}
 }
 
+func TestWalkSkipsSymlinkedDirectoryWithoutErroring(t *testing.T) {
+	dir := t.TempDir()
+	realDir := filepath.Join(dir, "real")
+	mustWrite(t, filepath.Join(realDir, "main.go"), "package main")
+
+	// A symlink to a directory (e.g. a vendored/shared skills or docs dir)
+	// is a common real-world repo layout. filepath.Walk's info.IsDir() is
+	// false for a symlink (it doesn't follow links to stat), so without a
+	// symlink check, Walk falls through to os.ReadFile(path) — which DOES
+	// follow the link at the OS level — and fails with "is a directory",
+	// aborting the whole scan.
+	if err := os.Symlink(realDir, filepath.Join(dir, "linked")); err != nil {
+		t.Skipf("symlinks not supported on this system: %v", err)
+	}
+
+	targets, err := scan.Walk([]string{dir}, config.Config{})
+	if err != nil {
+		t.Fatalf("expected Walk to skip the symlink without error, got: %v", err)
+	}
+
+	var gotReal bool
+	for _, tg := range targets {
+		if filepath.Base(tg.Source) == "main.go" {
+			gotReal = true
+		}
+	}
+	if !gotReal {
+		t.Error("expected the real (non-symlinked) main.go to still be walked")
+	}
+}
+
+func TestWalkSkipsSymlinkedFileWithoutErroring(t *testing.T) {
+	dir := t.TempDir()
+	realFile := filepath.Join(dir, "main.go")
+	mustWrite(t, realFile, "package main")
+
+	if err := os.Symlink(realFile, filepath.Join(dir, "linked.go")); err != nil {
+		t.Skipf("symlinks not supported on this system: %v", err)
+	}
+
+	targets, err := scan.Walk([]string{dir}, config.Config{})
+	if err != nil {
+		t.Fatalf("expected Walk to skip the symlink without error, got: %v", err)
+	}
+	if len(targets) != 1 {
+		t.Fatalf("expected only the real file to be walked (symlink skipped), got %d targets: %+v", len(targets), targets)
+	}
+}
+
 func mustWrite(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
