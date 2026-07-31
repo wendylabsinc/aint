@@ -15,8 +15,7 @@ access isn't needed, or a service-specific role like
 
 ```bash
 # Flags this:
-az role assignment create --assignee alice@example.com \
-  --role Owner --scope /subscriptions/xxx
+az role assignment create --assignee alice@example.com --role Owner --scope /subscriptions/xxx
 
 # Prefer this:
 az role assignment create --assignee alice@example.com \

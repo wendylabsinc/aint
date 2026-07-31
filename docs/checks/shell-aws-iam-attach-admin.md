@@ -16,8 +16,7 @@ permissions.
 
 ```bash
 # Flags this:
-aws iam attach-role-policy --role-name deploy \
-  --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+aws iam attach-role-policy --role-name deploy --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
 
 # Prefer this:
 aws iam attach-role-policy --role-name deploy \
