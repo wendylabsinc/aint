@@ -23,6 +23,8 @@ func dispatch(args []string) int {
 		return runList(args[2:])
 	case "hook":
 		return runHook(args[2:])
+	case "install":
+		return runInstall(args[2:])
 	default:
 		printUsage()
 		return 2
