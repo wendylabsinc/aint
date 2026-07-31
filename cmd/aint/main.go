@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	_ "aint/internal/checks"
 )
 
 func main() {
@@ -15,6 +17,10 @@ func dispatch(args []string) int {
 		return 2
 	}
 	switch args[1] {
+	case "check":
+		return runCheck(args[2:])
+	case "list":
+		return runList(args[2:])
 	default:
 		printUsage()
 		return 2
