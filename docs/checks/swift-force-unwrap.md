@@ -1,25 +1,26 @@
 # swift-force-unwrap
 
-**Flags:** force unwrap operations using `!` and force casts using `as!`, which crash at runtime if the value is nil or the cast fails.
+**Flags:** force try (`try!`) and force cast (`as!`) operations, which crash at runtime if the operation fails.
 
-**Why it matters:** a force unwrap on a nil value or a failed force cast crashes your app immediately. This is worse than a graceful error or a safe fallback — it leaves no room for recovery. Swift's optional system is designed to make these situations explicit and safer.
+**Why it matters:** a force try on an error or a failed force cast crashes your app immediately. This is worse than a graceful error or a safe fallback — it leaves no room for recovery. Swift's optional system is designed to make these situations explicit and safer.
 
-**Fix:** use the safe unwrap operators `try?` and `as?`, which return nil on failure, or add an explicit guard or if-let binding to check the value before using it.
+**Fix:** use the safe operators `try?` and `as?`, which return nil on failure, allowing you to handle the error gracefully or use a default value.
 
 ```swift
 // Flags this:
-let number = Int(stringValue)!
-let castedValue = object as! MyType
 try! doSomethingRisky()
+let castedValue = object as! MyType
 
 // Prefer this:
-if let number = Int(stringValue) {
-    // use number safely
+if let result = try? doSomethingRisky() {
+    // handle success
+} else {
+    // handle failure
 }
 
 if let castedValue = object as? MyType {
     // use castedValue safely
+} else {
+    // handle cast failure
 }
-
-let result = try? doSomethingRisky()  // returns nil on error
 ```
