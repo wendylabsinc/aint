@@ -41,13 +41,13 @@ type Check struct {
 
 // Finding is a single reported match.
 type Finding struct {
-	CheckID  string
-	Severity Severity
-	Source   string
-	Line     int
-	Column   int
-	Message  string
-	DocsURL  string
+	CheckID  string   `json:"check_id"`
+	Severity Severity `json:"severity"`
+	Source   string   `json:"source"`
+	Line     int      `json:"line"`
+	Column   int      `json:"column"`
+	Message  string   `json:"message"`
+	DocsURL  string   `json:"docs_url"`
 }
 
 // Run scans content line by line for the check's pattern, returning one
