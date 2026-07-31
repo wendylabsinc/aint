@@ -21,6 +21,8 @@ func dispatch(args []string) int {
 		return runCheck(args[2:])
 	case "list":
 		return runList(args[2:])
+	case "hook":
+		return runHook(args[2:])
 	default:
 		printUsage()
 		return 2
