@@ -1,0 +1,21 @@
+# .aint.yaml — example configuration for aint.
+# Delete or edit freely; aint runs with sane defaults if this file is absent.
+
+fail_on: error   # info|warning|error — findings at/above this exit non-zero
+                 # note: several seed checks default to `warning` severity and won't
+                 # fail a check run on their own unless overridden here or fail_on
+                 # is lowered to `warning`
+
+ignore:
+  - vendor/**
+  - node_modules/**
+  - "*.pb.go"
+
+checks:
+  {}
+  # Example overrides:
+  # go-ignored-error: error
+  # node-eval: off
+
+docs_base_url: ""  # set to a hosted docs URL once this repo has one;
+                    # leave blank to use relative docs/checks/<id>.md links
