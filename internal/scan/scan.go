@@ -35,7 +35,7 @@ func Walk(paths []string, cfg config.Config) ([]Target, error) {
 				return nil
 			}
 			ignoreCheck := path
-			if rel, relErr := filepath.Rel(root, path); relErr == nil {
+			if rel, relErr := filepath.Rel(root, path); relErr == nil && rel != "." {
 				ignoreCheck = rel
 			}
 			if cfg.IsIgnored(ignoreCheck) {

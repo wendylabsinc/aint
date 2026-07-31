@@ -53,6 +53,36 @@ func TestWalkRespectsIgnoreAndClassifiesLang(t *testing.T) {
 	}
 }
 
+func TestWalkIgnoresSingleFileRootByBasenamePattern(t *testing.T) {
+	dir := t.TempDir()
+	ignoredFile := filepath.Join(dir, "dep.pb.go")
+	keptFile := filepath.Join(dir, "main.go")
+	mustWrite(t, ignoredFile, "package dep")
+	mustWrite(t, keptFile, "package main")
+
+	cfg := config.Config{Ignore: []string{"*.pb.go"}}
+
+	// Passing a single FILE (not a directory) as the walk root, as a later
+	// CLI command like `aint check dep.pb.go` would. filepath.Walk invokes
+	// the callback once with path == root, so relative-to-root logic must
+	// not defeat basename matching in this case.
+	targets, err := scan.Walk([]string{ignoredFile}, cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(targets) != 0 {
+		t.Fatalf("expected ignored file root to produce no targets, got %+v", targets)
+	}
+
+	keptTargets, err := scan.Walk([]string{keptFile}, cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(keptTargets) != 1 {
+		t.Fatalf("expected non-ignored file root to produce 1 target, got %d", len(keptTargets))
+	}
+}
+
 func mustWrite(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
