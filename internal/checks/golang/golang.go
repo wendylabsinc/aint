@@ -13,7 +13,7 @@ var IgnoredError = check.Check{
 	Severity: check.SeverityWarning,
 	Langs:    []string{"go"},
 	Pattern:  regexp.MustCompile(`\b_\s*=\s*err\b`),
-	Message:  "error value discarded via `_ = err`",
+	Message:  "error value discarded by assigning it to the blank identifier",
 	DocsPath: "go-ignored-error.md",
 }
 
@@ -53,7 +53,7 @@ var HTTPClientNoTimeout = check.Check{
 	Severity: check.SeverityWarning,
 	Langs:    []string{"go"},
 	Pattern:  regexp.MustCompile(`http\.Client\{\s*\}`),
-	Message:  "http.Client{} has no Timeout set; a hung server can block this goroutine forever",
+	Message:  "an empty http.Client literal has no Timeout set; a hung server can block this goroutine forever",
 	DocsPath: "go-http-client-no-timeout.md",
 }
 

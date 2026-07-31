@@ -10,6 +10,14 @@ ignore:
   - vendor/**
   - node_modules/**
   - "*.pb.go"
+  # aint dogfoods itself (`aint check .` in this repo). These paths
+  # intentionally contain literal "bad" examples to test/document the
+  # checks — every hit in them is a self-referential false positive, not
+  # a real issue. Real production code lives in cmd/ and internal/*.go.
+  - docs/**
+  - README.md
+  - cmd/aint/testdata/**
+  - "*_test.go"
 
 checks:
   {}
