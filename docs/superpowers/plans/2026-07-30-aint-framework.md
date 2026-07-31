@@ -16,7 +16,7 @@
 - No `aint uninstall` command in this milestone.
 - `.aint.yaml` is optional; built-in defaults apply when absent.
 - `aint install` must be idempotent — running it twice must not duplicate hook entries, and must not disturb unrelated existing `settings.json` content.
-- Exit codes: `aint check` returns `0` clean / `1` if findings at/above `fail_on` exist. `aint hook pre-bash` / `aint hook post-edit` return `0` clean / `2` if findings at/above `fail_on` exist (so Claude Code blocks or surfaces feedback).
+- Exit codes: `aint check` returns `0` clean / `1` if findings at/above `fail_on` exist. `aint hook pre-bash` / `aint hook post-edit` return `0` clean / `2` if ANY finding exists at all, regardless of `fail_on` (decided during Task 11's review: hooks run inline as Claude Code is about to act, so every finding should surface immediately; only `checks: <id>: off` silences a check in hooks — `fail_on` only affects `aint check`'s batch pass/fail).
 - Spec reference: `docs/superpowers/specs/2026-07-30-aint-design.md`.
 
 ---

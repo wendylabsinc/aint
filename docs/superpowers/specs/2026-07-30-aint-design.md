@@ -115,7 +115,7 @@ Optional; built-in defaults apply if absent. Located at the repo root (or
 nearest ancestor directory containing one, similar to how `.git` is found).
 
 ```yaml
-fail_on: error          # info|warning|error — findings at/above this exit 1 (and block/feedback in hook mode)
+fail_on: error          # info|warning|error — findings at/above this exit 1 for `aint check`; hook mode always blocks/feeds back on any finding regardless of fail_on (see Claude Code hook integration below)
 ignore:
   - vendor/**
   - "*.pb.go"
@@ -146,10 +146,12 @@ to fix it, and one safe-vs-unsafe code example.
 Two hook subcommands, both reading Claude Code's hook JSON payload from stdin:
 
 - **`aint hook pre-bash`** — wired to `PreToolUse` matching `Bash`. Extracts
-  `tool_input.command`, runs `Kind=="shell"` checks against it. If any
-  finding is at/above `fail_on`: prints findings to stderr and **exits 2**,
-  which Claude Code interprets as blocking the command (stderr is shown to
-  Claude as the reason).
+  `tool_input.command`, runs shell-applicable checks against it. If any
+  finding exists at all (regardless of `fail_on` — hooks run inline as
+  Claude is about to act, so every finding should surface immediately;
+  only `checks: <id>: off` silences a check here): prints findings to
+  stderr and **exits 2**, which Claude Code interprets as blocking the
+  command (stderr is shown to Claude as the reason).
 - **`aint hook post-edit`** — wired to `PostToolUse` matching
   `Write|Edit|MultiEdit`. Extracts the written file path from the payload,
   runs the full file-check set against it. If findings exist: prints them to
