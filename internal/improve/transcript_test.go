@@ -80,6 +80,43 @@ func TestParseSessionFileResumesFromStartLine(t *testing.T) {
 	}
 }
 
+func TestParseSessionFileHandlesAbsentOriginField(t *testing.T) {
+	// Test that a user message with no origin field (missing entirely) is treated as human.
+	lines := []string{
+		`{"type":"user","message":{"role":"user","content":"please fix this"},"timestamp":"2026-08-01T03:50:01.199Z","sessionId":"sess-1","cwd":"/repo"}`,
+	}
+	path := filepath.Join(t.TempDir(), "session.jsonl")
+	writeLines(t, path, lines)
+
+	humans, _, _, err := improve.ParseSessionFile(path, 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(humans) != 1 {
+		t.Fatalf("expected 1 human message with absent origin field, got %d: %+v", len(humans), humans)
+	}
+	if humans[0].Text != "please fix this" {
+		t.Errorf("unexpected text: %q", humans[0].Text)
+	}
+}
+
+func TestParseSessionFileExcludesExplicitNonHumanOrigin(t *testing.T) {
+	// Test that a user message with explicit non-human origin.kind is excluded.
+	lines := []string{
+		`{"type":"user","message":{"role":"user","content":"task update"},"timestamp":"2026-08-01T03:50:01.199Z","sessionId":"sess-1","cwd":"/repo","origin":{"kind":"task-notification"}}`,
+	}
+	path := filepath.Join(t.TempDir(), "session.jsonl")
+	writeLines(t, path, lines)
+
+	humans, _, _, err := improve.ParseSessionFile(path, 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(humans) != 0 {
+		t.Fatalf("expected 0 human messages for non-human origin, got %d: %+v", len(humans), humans)
+	}
+}
+
 func TestFindSessionFilesFindsJSONLRecursivelyAndSorts(t *testing.T) {
 	dir := t.TempDir()
 	mustWriteEmpty(t, filepath.Join(dir, "b", "2.jsonl"))

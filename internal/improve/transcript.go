@@ -77,7 +77,9 @@ func FindSessionFiles(dir string) ([]string, error) {
 // assistant turn found from there on, plus the total number of lines in
 // the file. Lines that fail to parse as JSON are skipped rather than
 // causing an error, since a session file being actively appended to can
-// have a truncated trailing line.
+// have a truncated trailing line. For user messages with string content,
+// a message is treated as human if origin.kind is either "human" or absent
+// (empty); messages with explicit non-human kinds are excluded.
 func ParseSessionFile(path string, startLine int) ([]HumanMessage, []AssistantTurn, int, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -109,7 +111,9 @@ func ParseSessionFile(path string, startLine int) ([]HumanMessage, []AssistantTu
 			if err := json.Unmarshal(raw.Message.Content, &text); err != nil {
 				continue // array content: a tool_result being echoed back, not human-typed
 			}
-			if raw.Origin.Kind != "human" {
+			// Treat as human if origin.kind is "human" or absent (empty).
+			// Exclude only explicit non-human kinds (e.g. "task-notification", "coordinator").
+			if raw.Origin.Kind != "human" && raw.Origin.Kind != "" {
 				continue
 			}
 			humans = append(humans, HumanMessage{
