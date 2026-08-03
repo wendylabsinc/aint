@@ -25,6 +25,8 @@ func dispatch(args []string) int {
 		return runHook(args[2:])
 	case "install":
 		return runInstall(args[2:])
+	case "improve":
+		return runImprove(args[2:])
 	default:
 		printUsage()
 		return 2
@@ -38,5 +40,6 @@ commands:
   check [paths...]            scan files/dirs for issues
   list                        list all registered checks
   install [--global]          wire aint into Claude Code hooks
+  improve                     mine Claude Code session history for incidents
   hook <pre-bash|post-edit>   internal: used by installed hooks`)
 }

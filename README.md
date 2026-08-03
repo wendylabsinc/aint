@@ -87,4 +87,5 @@ aint check [paths...]           # scan files/dirs (default: .)
 aint check --format=json ...    # machine-readable output
 aint list                       # list all registered checks
 aint install [--global]         # wire aint into Claude Code hooks
+aint improve                    # mine ~/.claude/projects for incidents, report suggested aint/lint rules + doc fixes
 ```
