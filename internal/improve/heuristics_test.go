@@ -32,11 +32,36 @@ func TestDetectSignalCategories(t *testing.T) {
 
 	for _, c := range cases {
 		got := improve.Detect(c.text)
-		sort.Strings(got)
-		want := append([]string{}, c.want...)
-		sort.Strings(want)
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("Detect(%q) = %v, want %v", c.text, got, want)
+		if c.want == nil {
+			// For nil expectations, use direct comparison
+			if got != nil {
+				t.Errorf("Detect(%q) = %v, want nil", c.text, got)
+			}
+		} else {
+			// For non-nil expectations, sort and compare
+			sort.Strings(got)
+			want := append([]string{}, c.want...)
+			sort.Strings(want)
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("Detect(%q) = %v, want %v", c.text, got, want)
+			}
+		}
+	}
+}
+
+func TestDetectReturnsNilForNoSignals(t *testing.T) {
+	cases := []string{
+		"please add a test for this function",
+		"This is a CLI tool",
+		"no worries, that's totally fine, thanks!",
+		"The quick brown fox jumps over the lazy dog",
+		"I appreciate your help",
+	}
+
+	for _, text := range cases {
+		got := improve.Detect(text)
+		if got != nil {
+			t.Errorf("Detect(%q) returned non-nil %v (type %T), want nil", text, got, got)
 		}
 	}
 }

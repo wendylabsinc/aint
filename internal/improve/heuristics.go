@@ -23,7 +23,7 @@ var terseNegative = regexp.MustCompile(`(?i)^(no|nope|wrong)\.?!?$`)
 // Detect returns the category names of every heuristic signal that matches
 // text. A nil result means text isn't a candidate for analysis.
 func Detect(text string) []string {
-	cats := []string{}
+	var cats []string
 	for _, s := range signals {
 		if s.pattern.MatchString(text) {
 			cats = append(cats, s.category)
