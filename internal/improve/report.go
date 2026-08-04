@@ -6,6 +6,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"time"
 )
 
 // WriteReport renders incidents as markdown to w, grouped by project then
@@ -67,7 +68,7 @@ func writeProjectSessions(w io.Writer, incidents []Incident) error {
 		list := bySession[sessionID]
 		sort.Slice(list, func(i, j int) bool { return list[i].Line < list[j].Line })
 
-		if _, err := fmt.Fprintf(w, "### Session %s — %s\n\n", sessionID, list[0].Timestamp.Format("2006-01-02T15:04:05Z")); err != nil {
+		if _, err := fmt.Fprintf(w, "### Session %s — %s\n\n", sessionID, list[0].Timestamp.UTC().Format(time.RFC3339)); err != nil {
 			return err
 		}
 		for _, inc := range list {

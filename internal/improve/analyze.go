@@ -29,7 +29,12 @@ func NewExecClaudeRunner(bin string) ClaudeRunner {
 }
 
 func (r execClaudeRunner) Run(ctx context.Context, prompt string) (string, error) {
-	cmd := exec.CommandContext(ctx, r.bin, "-p", prompt)
+	// Pass the prompt via stdin rather than argv: an argv prompt leaks the
+	// full transcript excerpt to any local process via ps, and can exceed
+	// ARG_MAX/E2BIG for large prompts. `claude -p` with no positional
+	// prompt argument reads the prompt from stdin.
+	cmd := exec.CommandContext(ctx, r.bin, "-p")
+	cmd.Stdin = strings.NewReader(prompt)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -66,6 +71,11 @@ type claudeVerdict struct {
 }
 
 const analysisTimeout = 60 * time.Second
+
+// maxPromptTextChars bounds how much of a candidate's raw text is embedded
+// in the claude prompt, matching the truncation approach BuildContext (in
+// context.go) already uses for its own bound.
+const maxPromptTextChars = 8000
 
 // Analyze asks runner to classify and analyze candidate c. It returns
 // (incident, true) when the incident belongs in the report — either
@@ -121,7 +131,17 @@ Decide whether this is a genuine incident of the user disagreeing with or being 
   "doc_memory_suggestion": "concrete text to add to CLAUDE.md or a memory/lessons-learned file to prevent this next time, or null if not applicable"
 }
 
-If is_incident is false, summary and root_cause should be empty strings and the three suggestion fields should be null.`, strings.Join(c.Signals, ", "), c.Text, c.Context)
+If is_incident is false, summary and root_cause should be empty strings and the three suggestion fields should be null.`, strings.Join(c.Signals, ", "), truncateText(c.Text), c.Context)
+}
+
+// truncateText caps s at maxPromptTextChars, appending a truncation marker
+// when it's longer, so the claude -p prompt stays bounded regardless of how
+// long the flagged human message was.
+func truncateText(s string) string {
+	if len(s) <= maxPromptTextChars {
+		return s
+	}
+	return s[:maxPromptTextChars] + "... [truncated]"
 }
 
 func parseVerdict(output string) (claudeVerdict, error) {

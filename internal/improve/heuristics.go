@@ -15,7 +15,7 @@ var signals = []signal{
 	{"correction", regexp.MustCompile(`(?i)(that'?s (not|wrong)|not what i (asked|meant|wanted)|you (misunderstood|misread)|that'?s incorrect|^no+,)`)},
 	{"stop-undo", regexp.MustCompile(`(?i)(stop doing that|don'?t do that|undo (that|this)|revert (this|that)|why did you)`)},
 	{"frustration-language", regexp.MustCompile(`(?i)(ugh+\b|frustrat\w*|annoy\w*|seriously\?|come on\b|how many times|i already (said|told) you)`)},
-	{"shouting", regexp.MustCompile(`!!+|\?\?+|\b[A-Z]{3,}(?:\s+[A-Z]{3,}){1,}\b`)},
+	{"shouting", regexp.MustCompile(`\b[A-Z]{3,}(?:\s+[A-Z]{3,}){2,}\b`)},
 }
 
 var terseNegative = regexp.MustCompile(`(?i)^(no|nope|wrong)\.?!?$`)

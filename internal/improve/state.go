@@ -41,12 +41,12 @@ func LoadState(path string) (State, bool, error) {
 // SaveState writes state to path as indented JSON, creating parent
 // directories as needed.
 func SaveState(path string, state State) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return err
 	}
 	data, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0644)
+	return os.WriteFile(path, data, 0600)
 }

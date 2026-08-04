@@ -82,17 +82,13 @@ func runImproveWithIO(args []string, stdout, stderr io.Writer, now time.Time, ru
 		outPath = filepath.Join(home, ".aint", "improve-reports", now.Format("2006-01-02")+".md")
 	}
 
-	state := improve.State{Offsets: map[string]int{}}
-	if !full {
-		loaded, corrupt, err := improve.LoadState(statePath)
-		if err != nil {
-			writeErr(stderr, "loading state", err)
-			return 1
-		}
-		if corrupt {
-			fmt.Fprintf(stderr, "aint: warning: state file %s was corrupt, starting fresh\n", statePath)
-		}
-		state = loaded
+	state, corrupt, err := improve.LoadState(statePath)
+	if err != nil {
+		writeErr(stderr, "loading state", err)
+		return 1
+	}
+	if corrupt {
+		fmt.Fprintf(stderr, "aint: warning: state file %s was corrupt, starting fresh\n", statePath)
 	}
 
 	claudeUnavailable := ""
@@ -112,42 +108,73 @@ func runImproveWithIO(args []string, stdout, stderr io.Writer, now time.Time, ru
 
 	var incidents []improve.Incident
 	callsUsed := 0
+	candidatesFound := 0
+	limitReached := false
 
 filesLoop:
 	for _, file := range files {
-		startLine := state.Offsets[file]
-		humans, assistants, totalLines, err := improve.ParseSessionFile(file, startLine)
+		startLine := 0
+		if !full {
+			startLine = state.Offsets[file]
+		}
+
+		// Always parse the whole file (startLine 0), never just from the
+		// cached offset: this is what lets BuildContext look back at
+		// assistant turns that came before a deferred/retried candidate.
+		// The tradeoff is re-parsing already-seen bytes every run, which is
+		// cheap CPU compared to the cost of a claude call.
+		humans, assistants, totalLines, err := improve.ParseSessionFile(file, 0)
 		if err != nil {
 			writeErr(stderr, "parsing "+file, err)
 			continue
 		}
 
 		newOffset := totalLines
-		limitReached := false
+		fileLimitReached := false
 
 		for _, h := range humans {
+			if h.Line <= startLine {
+				continue
+			}
 			signals := improve.Detect(h.Text)
 			if len(signals) == 0 {
 				continue
 			}
+			candidatesFound++
 			candidate := improve.Candidate{HumanMessage: h, Signals: signals}
 
-			if claudeUnavailable != "" {
-				incidents = append(incidents, improve.Incident{Candidate: candidate, AnalysisFailed: claudeUnavailable})
-				continue
-			}
-
-			if callsUsed >= limit {
+			if claudeUnavailable == "" && callsUsed >= limit {
 				newOffset = h.Line - 1
-				limitReached = true
+				fileLimitReached = true
 				break
 			}
 
-			candidate.Context = improve.BuildContext(humans, assistants, candidate)
-			callsUsed++
-			if incident, include := improve.Analyze(runner, candidate); include {
+			var incident improve.Incident
+			include := true
+			if claudeUnavailable != "" {
+				incident = improve.Incident{Candidate: candidate, AnalysisFailed: claudeUnavailable}
+			} else {
+				candidate.Context = improve.BuildContext(humans, assistants, candidate)
+				callsUsed++
+				incident, include = improve.Analyze(runner, candidate)
+			}
+
+			if include {
 				incidents = append(incidents, incident)
 			}
+
+			if incident.AnalysisFailed != "" {
+				// A transient analysis failure on this candidate: pin the
+				// offset just before it (so it's retried next run) and stop
+				// processing this file, but don't abort the whole run —
+				// other files may still have candidates worth analyzing.
+				newOffset = h.Line - 1
+				break
+			}
+		}
+
+		if fileLimitReached {
+			limitReached = true
 		}
 
 		state.Offsets[file] = newOffset
@@ -156,13 +183,16 @@ filesLoop:
 			return 1
 		}
 
-		if limitReached {
+		if fileLimitReached {
 			break filesLoop
 		}
 	}
 
 	if len(incidents) == 0 {
 		fmt.Fprintln(stdout, "No new incidents since last run.")
+		if limitReached {
+			fmt.Fprintln(stdout, "Stopped at --limit; run again to continue.")
+		}
 		return 0
 	}
 
@@ -173,11 +203,13 @@ filesLoop:
 		}
 	}
 
-	if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(outPath), 0700); err != nil {
 		writeErr(stderr, "creating report directory", err)
 		return 1
 	}
-	f, err := os.Create(outPath)
+	// Append rather than truncate: outPath defaults to a date-based path, so
+	// a second same-day run must not destroy the first run's report.
+	f, err := os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		writeErr(stderr, "creating report file", err)
 		return 1
@@ -189,6 +221,9 @@ filesLoop:
 		return 1
 	}
 
-	fmt.Fprintf(stdout, "Found %d new incidents (%d analysis failures). Report: %s\n", len(incidents), failed, outPath)
+	fmt.Fprintf(stdout, "Found %d new incidents (%d analysis failures) from %d candidates. Report: %s\n", len(incidents), failed, candidatesFound, outPath)
+	if limitReached {
+		fmt.Fprintln(stdout, "Stopped at --limit; run again to continue.")
+	}
 	return 0
 }

@@ -10,9 +10,9 @@ import (
 )
 
 type fakeRunner struct {
-	output      string
-	err         error
-	lastPrompt  string
+	output     string
+	err        error
+	lastPrompt string
 }
 
 func (f *fakeRunner) Run(ctx context.Context, prompt string) (string, error) {
@@ -117,5 +117,22 @@ func TestAnalyzeRunnerErrorSetsAnalysisFailed(t *testing.T) {
 	}
 	if !strings.Contains(incident.AnalysisFailed, "command not found") {
 		t.Errorf("expected AnalysisFailed to mention the runner error, got %q", incident.AnalysisFailed)
+	}
+}
+
+func TestAnalyzeTruncatesVeryLongCandidateText(t *testing.T) {
+	runner := &fakeRunner{output: `{"is_incident": false, "summary": "", "root_cause": "", "aint_rule_suggestion": null, "lint_rule_suggestion": null, "doc_memory_suggestion": null}`}
+
+	longText := strings.Repeat("a", 20000)
+	c := testCandidate()
+	c.Text = longText
+
+	improve.Analyze(runner, c)
+
+	if !strings.Contains(runner.lastPrompt, "... [truncated]") {
+		t.Error("expected prompt to contain a truncation marker for very long candidate text")
+	}
+	if strings.Contains(runner.lastPrompt, longText) {
+		t.Error("expected prompt to NOT contain the full untruncated candidate text")
 	}
 }

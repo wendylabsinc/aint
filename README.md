@@ -19,7 +19,7 @@ Agentic coding tools are extremely good at writing code that *runs*. They're not
 
 `aint` is that watcher. It's:
 
-- **Fast** - a single static Go binary, no runtime, no network calls, scans a repo in milliseconds.
+- **Fast** - a single static Go binary, no runtime, no network calls, scans a repo in milliseconds. (The one exception is `aint improve`, an opt-in subcommand that shells out to the local `claude` CLI and does make network calls on your behalf.)
 - **Cross-language** - Go, Swift, Python, Node.js today; the check catalog is designed to grow.
 - **Shell-aware** - it treats a raw shell command the same as a file, so it can statically verify IaC and cloud CLI invocations before they run, not just source code.
 - **Configurable** - every check can be silenced or have its severity tuned per-project via `.aint.yaml`.
@@ -88,4 +88,7 @@ aint check --format=json ...    # machine-readable output
 aint list                       # list all registered checks
 aint install [--global]         # wire aint into Claude Code hooks
 aint improve                    # mine ~/.claude/projects for incidents, report suggested aint/lint rules + doc fixes
+                                 # flags: --dir --out --state --claude-bin --limit --full
+                                 # shells out to your installed `claude` CLI to analyze flagged excerpts -
+                                 # this sends conversation text to Anthropic and costs tokens/time
 ```

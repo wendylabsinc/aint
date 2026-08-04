@@ -22,12 +22,17 @@ func TestDetectSignalCategories(t *testing.T) {
 		{"ugh, seriously?", []string{"frustration-language"}},
 		{"I already told you not to do that", []string{"frustration-language"}},
 		{"WHY WOULD YOU DO THAT", []string{"shouting"}},
-		{"stop!!", []string{"shouting"}},
+		{"stop!!", nil},
 		{"no.", []string{"terse-negative-reply"}},
 		{"wrong.", []string{"terse-negative-reply"}},
 		{"please add a test for this function", nil},
 		{"This is a CLI tool", nil},
 		{"no worries, that's totally fine, thanks!", nil},
+		{"use an HTTP GET request here", nil},
+		{"the MCP SERVER should expose these tools", nil},
+		{"nice!! that worked", nil},
+		{"thanks!! perfect", nil},
+		{"let x = y ?? defaultValue", nil},
 	}
 
 	for _, c := range cases {
