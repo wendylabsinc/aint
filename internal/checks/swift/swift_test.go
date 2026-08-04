@@ -153,3 +153,17 @@ func TestImplicitlyUnwrappedOptionalIgnoresRegularOptional(t *testing.T) {
 		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
 	}
 }
+
+func TestJSONSerializationUsageDetectsJSONObjectWith(t *testing.T) {
+	findings := swift.JSONSerializationUsage.Run("main.swift", []byte(`let obj = try JSONSerialization.jsonObject(with: data)`), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestJSONSerializationUsageIgnoresSwiftJSONSchema(t *testing.T) {
+	findings := swift.JSONSerializationUsage.Run("main.swift", []byte(`let env = try SimStateEnvelope.schema.decode(data)`), "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}

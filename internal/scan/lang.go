@@ -12,10 +12,14 @@ func LangForFile(path string) string {
 		return "swift"
 	case strings.HasSuffix(path, ".py"):
 		return "python"
-	case strings.HasSuffix(path, ".js"), strings.HasSuffix(path, ".ts"):
+	case strings.HasSuffix(path, ".js"), strings.HasSuffix(path, ".ts"), strings.HasSuffix(path, ".mjs"):
 		return "nodejs"
 	case strings.HasSuffix(path, ".sh"):
 		return "shell"
+	case strings.HasSuffix(path, ".sql"):
+		return "sql"
+	case strings.HasSuffix(path, ".yml"), strings.HasSuffix(path, ".yaml"):
+		return "yaml"
 	default:
 		return ""
 	}

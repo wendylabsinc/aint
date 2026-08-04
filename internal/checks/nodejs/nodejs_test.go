@@ -111,3 +111,24 @@ func TestCORSWildcardCredentialsIgnoresScopedOrigin(t *testing.T) {
 		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
 	}
 }
+
+func TestPgClientRawConnectDetectsNewPgClient(t *testing.T) {
+	findings := nodejs.PgClientRawConnect.Run("brain.mjs", []byte(`const client = new pg.Client(config)`), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestPgClientRawConnectDetectsBareClient(t *testing.T) {
+	findings := nodejs.PgClientRawConnect.Run("brain.mjs", []byte(`const client = new Client({ connectionString })`), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestPgClientRawConnectIgnoresPoolQuery(t *testing.T) {
+	findings := nodejs.PgClientRawConnect.Run("brain.mjs", []byte(`await pool.query(sql, values)`), "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}

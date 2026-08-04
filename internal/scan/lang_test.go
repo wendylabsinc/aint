@@ -13,7 +13,11 @@ func TestLangForFile(t *testing.T) {
 		"script.py":     "python",
 		"index.js":      "nodejs",
 		"index.ts":      "nodejs",
+		"server.mjs":    "nodejs",
 		"deploy.sh":     "shell",
+		"migration.sql": "sql",
+		"build.yml":     "yaml",
+		"build.yaml":    "yaml",
 		"README.md":     "",
 		"path/to/a.go":  "go",
 	}

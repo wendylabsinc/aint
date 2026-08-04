@@ -77,6 +77,16 @@ var CORSWildcardCredentials = check.Check{
 	DocsPath: "node-cors-wildcard-credentials.md",
 }
 
+var PgClientRawConnect = check.Check{
+	ID:       "node-pg-client-raw-connect",
+	Title:    "Raw pg.Client instantiation",
+	Severity: check.SeverityWarning,
+	Langs:    []string{"nodejs"},
+	Pattern:  regexp.MustCompile(`new\s+(pg\.)?Client\s*\(`),
+	Message:  "node-postgres emits 'error' on the client instance on any abrupt disconnect - attach client.on('error', ...) before .connect() or an uncaught exception kills the whole process, not just this query",
+	DocsPath: "node-pg-client-raw-connect.md",
+}
+
 func init() {
 	check.Register(Eval)
 	check.Register(ChildProcessExec)
@@ -85,4 +95,5 @@ func init() {
 	check.Register(JWTAlgNone)
 	check.Register(ConsoleLog)
 	check.Register(CORSWildcardCredentials)
+	check.Register(PgClientRawConnect)
 }

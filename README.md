@@ -56,7 +56,7 @@ From then on:
 | `python-shell-true` | warning | `.py` | `subprocess.*(shell=True)` |
 | `node-eval` | warning | `.js` / `.ts` | `eval(…)` |
 
-This table shows a representative sample - run `aint list` for the full, current set (46 checks as of this batch, across secrets, shell/cloud IAM, Go, Swift, Python, and Node.js). See `docs/checks/<id>.md` for the full explanation and fix for each one.
+This table shows a representative sample - run `aint list` for the full, current set (56 checks as of this batch, across secrets, shell/cloud IAM, Go, Swift, Python, Node.js, SQL, and YAML). See `docs/checks/<id>.md` for the full explanation and fix for each one.
 
 ## Configuration
 

@@ -158,3 +158,135 @@ func TestDisableHostFirewallIgnoresSetenforce1(t *testing.T) {
 		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
 	}
 }
+
+func TestGrepSearchCodebaseDetectsRecursiveGrep(t *testing.T) {
+	findings := shell.GrepSearchCodebase.Run("<command>", []byte(`grep -rn "TODO" .`), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGrepSearchCodebaseDetectsRipgrep(t *testing.T) {
+	findings := shell.GrepSearchCodebase.Run("<command>", []byte(`rg "TODO" src/`), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGrepSearchCodebaseIgnoresSingleFileGrep(t *testing.T) {
+	findings := shell.GrepSearchCodebase.Run("<command>", []byte(`grep -n "TODO" file.go`), "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGrepSearchCodebaseIgnoresFilteringProcessOutput(t *testing.T) {
+	findings := shell.GrepSearchCodebase.Run("<command>", []byte("ps aux | grep node"), "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGitAddBroadDetectsDashA(t *testing.T) {
+	findings := shell.GitAddBroad.Run("<command>", []byte("git add -A"), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGitAddBroadDetectsBareDot(t *testing.T) {
+	findings := shell.GitAddBroad.Run("<command>", []byte("git add ."), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGitAddBroadIgnoresSpecificFile(t *testing.T) {
+	findings := shell.GitAddBroad.Run("<command>", []byte("git add internal/apps_install.go"), "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGitCheckoutSharedWendyosTreeDetectsCdAndCheckout(t *testing.T) {
+	cmd := "cd ~/git/wendy/wendyos && git checkout jo/app-install"
+	findings := shell.GitCheckoutSharedWendyosTree.Run("<command>", []byte(cmd), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGitCheckoutSharedWendyosTreeDetectsDashCSwitch(t *testing.T) {
+	cmd := "git -C ~/git/wendy/wendyos switch main"
+	findings := shell.GitCheckoutSharedWendyosTree.Run("<command>", []byte(cmd), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGitCheckoutSharedWendyosTreeIgnoresSiblingRepo(t *testing.T) {
+	cmd := "cd ~/git/wendy/wendyos-builder && git checkout jo/foo"
+	findings := shell.GitCheckoutSharedWendyosTree.Run("<command>", []byte(cmd), "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGitCheckoutSharedWendyosTreeIgnoresUnrelatedCheckout(t *testing.T) {
+	cmd := "cd ~/git/wendy/pascal && git checkout jo/foo"
+	findings := shell.GitCheckoutSharedWendyosTree.Run("<command>", []byte(cmd), "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestPsqlInlineSQLVariableDetectsInterpolatedSQL(t *testing.T) {
+	cmd := `psql -c "BEGIN READ ONLY; $SQL; COMMIT;"`
+	findings := shell.PsqlInlineSQLVariable.Run("<command>", []byte(cmd), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestPsqlInlineSQLVariableIgnoresStaticSQL(t *testing.T) {
+	cmd := `psql -c "SELECT 1;"`
+	findings := shell.PsqlInlineSQLVariable.Run("<command>", []byte(cmd), "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestContainerCachePurgeForceDetectsDockerBuilderPruneForce(t *testing.T) {
+	findings := shell.ContainerCachePurgeForce.Run("<command>", []byte("docker builder prune -af"), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestContainerCachePurgeForceDetectsContainerBuilderDeleteForce(t *testing.T) {
+	findings := shell.ContainerCachePurgeForce.Run("<command>", []byte("container builder delete --force"), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestContainerCachePurgeForceIgnoresPlainPrune(t *testing.T) {
+	findings := shell.ContainerCachePurgeForce.Run("<command>", []byte("docker container prune"), "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestYoctoTmpdirSymlinkDetectsSymlinkedBuildTmp(t *testing.T) {
+	findings := shell.YoctoTmpdirSymlink.Run("<command>", []byte("ln -s /wendy/build-tmp build/tmp"), "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestYoctoTmpdirSymlinkIgnoresUnrelatedSymlink(t *testing.T) {
+	findings := shell.YoctoTmpdirSymlink.Run("<command>", []byte("ln -s foo.txt bar.txt"), "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}

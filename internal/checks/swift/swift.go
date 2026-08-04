@@ -97,6 +97,16 @@ var ImplicitlyUnwrappedOptional = check.Check{
 	DocsPath: "swift-implicitly-unwrapped-optional.md",
 }
 
+var JSONSerializationUsage = check.Check{
+	ID:       "swift-jsonserialization",
+	Title:    "Foundation JSONSerialization usage",
+	Severity: check.SeverityWarning,
+	Langs:    []string{"swift"},
+	Pattern:  regexp.MustCompile(`\bJSONSerialization\b`),
+	Message:  "JSONSerialization's untyped [String: Any] API is sloppy for typed payloads; decode with swift-json-schema instead (a @Schemable struct's Type.schema.decode, or JSONValue.parse for ad-hoc parsing)",
+	DocsPath: "swift-jsonserialization.md",
+}
+
 func init() {
 	check.Register(ForceUnwrap)
 	check.Register(PrintStatement)
@@ -107,4 +117,5 @@ func init() {
 	check.Register(FatalError)
 	check.Register(TodoComment)
 	check.Register(ImplicitlyUnwrappedOptional)
+	check.Register(JSONSerializationUsage)
 }
