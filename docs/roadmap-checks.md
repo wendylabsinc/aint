@@ -142,6 +142,33 @@ similar rules. These need real understanding of task/actor boundaries: a
 regex approximation would be noisy and more likely to mislead than help.
 Revisit once/if aint grows an AST option for Swift.
 
+**Concurrency checks (added 2026-08-07), sourced from real incidents.**
+Four narrowly-scoped concurrency/memory-safety checks shipped despite the
+deferral above — each is a literal-token or single-line-anchored match with
+low false-positive risk, not an attempt at real actor/task-boundary
+analysis:
+
+| ID | Severity | Fits today? | Detects |
+|---|---|---|---|
+| `swift-nonisolated-unsafe` | warning | ✅ | `nonisolated(unsafe)` — a literal token match, no ambiguity |
+| `swift-unsafe-mutable-pointer` | warning | ✅ | `UnsafeMutablePointer`/`UnsafeMutableRawPointer`/`UnsafeMutableBufferPointer`/`UnsafeMutableRawBufferPointer` — literal type-name matches |
+| `swift-taskgroup-cancelall-not-deferred` | warning | ⚠️ approximate | A bare `group.cancelAll()` statement alone on its line, not wrapped in `defer`; won't catch a multi-line `defer { }` block (see the check's doc for the recommended one-liner style that keeps it quiet) |
+| `swift-unstructured-task` | warning | ⚠️ approximate | `Task { }` / `Task(priority:...) { }` / `Task.detached { }` as opposed to `group.addTask`/`async let`; this is the one row from the original deferral note that got a fit-today implementation after all — it's a plain token match (not real actor-boundary analysis), so it will also flag legitimate fire-and-forget entry points and may be noisy in UI-heavy codebases that lean on `Task { }` from view callbacks. Downgrade its severity or turn it `off` per-project via `.aint.yaml` if so. |
+
+**Library-steering checks (added 2026-08-11).** Five checks whose job is to
+point a Swift-writing agent at the ecosystem's standard answer instead of
+letting it hand-roll one. They're taste/convention rules rather than
+security rules, so the bar is "does the redirect hold in almost every
+case?":
+
+| ID | Severity | Fits today? | Detects |
+|---|---|---|---|
+| `swift-commandline-arguments` | warning | ✅ | `CommandLine.arguments`/`argc`/`unsafeArgv` → swift-argument-parser. Literal token match; the only legitimate use (forwarding argv into ArgumentParser itself) is rare, since `@main` + `ParsableCommand` needs no argv access |
+| `swift-processinfo-environment` | warning | ✅ | `ProcessInfo.processInfo.environment` → swift-configuration's `ConfigReader` with `EnvironmentVariablesProvider`. Literal member-chain match with optional whitespace around dots |
+| `swift-dispatchsource-signal` | warning | ✅ | `DispatchSource.makeSignalSource` → swift-service-lifecycle's `ServiceGroup`. Literal match, and other `DispatchSource.make*Source` factories are untouched |
+| `swift-tools-version-outdated` | warning | ✅ | A `// swift-tools-version:` header at 6.2 or earlier → always declare the latest (6.3 today). Effectively `Package.swift`-scoped without needing a path filter, since the header appears nowhere else. **Hardcodes the current latest** — bump the regex and message when 6.4 ships |
+| `swift-simd-fixed-size-storage` | info | ⚠️ approximate | `SIMDn` → `InlineArray` for fixed-capacity inline storage. Regex can't tell storage use from real lane-parallel arithmetic, which is legitimate SIMD use, so this ships at `info`; graphics/DSP-heavy projects should turn it `off` via `.aint.yaml` |
+
 ## Deferred until a real parser or engine capability exists
 
 Don't force these into the regex engine — they're the exact false-positive
