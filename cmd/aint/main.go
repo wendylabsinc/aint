@@ -39,7 +39,7 @@ func printUsage() {
 commands:
   check [paths...]            scan files/dirs for issues
   list                        list all registered checks
-  install [--global]          wire aint into Claude Code hooks
+  install [--global]          wire aint into agent hooks (global also installs for Codex)
   improve                     mine Claude Code session history for incidents
   hook <pre-bash|post-edit>   internal: used by installed hooks`)
 }

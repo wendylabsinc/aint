@@ -33,11 +33,16 @@ go build -o aint ./cmd/aint     # or: make build
 ./aint list                     # see every registered check
 ```
 
-Wire it into Claude Code so it runs automatically:
+Wire it into Claude Code so it runs automatically, or install globally for both
+Claude Code and Codex:
 
 ```bash
-./aint install                  # writes hooks into .claude/settings.json
+./aint install                  # writes .claude/settings.json using this binary's absolute path
+./aint install --global         # writes ~/.claude/settings.json and ~/.codex/hooks.json
 ```
+
+After installing Codex hooks, open `/hooks` in Codex to review and trust the
+new command hooks before they run.
 
 From then on:
 - Every `Bash` command Claude Code is about to run is checked first - an overscoped IAM grant or a `chmod 777` gets **blocked outright**, with the reason shown back to Claude.
@@ -86,7 +91,7 @@ checks:
 aint check [paths...]           # scan files/dirs (default: .)
 aint check --format=json ...    # machine-readable output
 aint list                       # list all registered checks
-aint install [--global]         # wire aint into Claude Code hooks
+aint install [--global]         # wire aint into agent hooks; --global includes Codex
 aint improve                    # mine ~/.claude/projects for incidents, report suggested aint/lint rules + doc fixes
                                  # flags: --dir --out --state --claude-bin --limit --full
                                  # shells out to your installed `claude` CLI to analyze flagged excerpts -

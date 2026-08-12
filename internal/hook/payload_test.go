@@ -28,3 +28,25 @@ func TestParsePostToolUse(t *testing.T) {
 		t.Errorf("unexpected file path: %q", p.ToolInput.FilePath)
 	}
 }
+
+func TestPostToolUseEditedFilePathsFromCodexApplyPatch(t *testing.T) {
+	data := []byte(`{
+		"tool_name":"apply_patch",
+		"tool_input":{"command":"*** Begin Patch\n*** Update File: old.go\n*** Move to: moved.go\n@@\n-old\n+new\n*** Add File: added.go\n+package added\n*** Delete File: removed.go\n*** End Patch"}
+	}`)
+	p, err := hook.ParsePostToolUse(data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got := p.EditedFilePaths()
+	want := []string{"old.go", "moved.go", "added.go", "removed.go"}
+	if len(got) != len(want) {
+		t.Fatalf("expected %v, got %v", want, got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("expected %v, got %v", want, got)
+		}
+	}
+}

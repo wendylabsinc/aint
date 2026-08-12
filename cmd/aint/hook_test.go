@@ -45,3 +45,21 @@ func TestRunHookPostEditReportsFindingsInEditedFile(t *testing.T) {
 		t.Errorf("expected stderr to mention go-ignored-error, got: %s", stderr.String())
 	}
 }
+
+func TestRunHookPostEditReportsFindingsFromCodexApplyPatch(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "main.go")
+	if err := os.WriteFile(path, []byte("_ = err"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	stdin := bytes.NewBufferString(`{"cwd":"` + dir + `","tool_name":"apply_patch","tool_input":{"command":"*** Begin Patch\n*** Update File: main.go\n@@\n-old\n+new\n*** End Patch"}}`)
+	var stdout, stderr bytes.Buffer
+	code := runHookWithIO([]string{"post-edit"}, stdin, &stdout, &stderr)
+	if code != 2 {
+		t.Fatalf("expected exit code 2, got %d (stderr: %s)", code, stderr.String())
+	}
+	if !bytes.Contains(stderr.Bytes(), []byte("go-ignored-error")) {
+		t.Errorf("expected stderr to mention go-ignored-error, got: %s", stderr.String())
+	}
+}
