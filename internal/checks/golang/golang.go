@@ -77,6 +77,76 @@ var SQLStringConcat = check.Check{
 	DocsPath: "go-sql-string-concat.md",
 }
 
+var ErrorDirectComparison = check.Check{
+	ID:       "go-error-direct-comparison",
+	Title:    "Direct comparison of an error",
+	Severity: check.SeverityWarning,
+	Langs:    []string{"go"},
+	Analyze:  errorDirectComparison,
+	Message:  "direct error comparison misses wrapped errors; use errors.Is unless identity comparison is intentional",
+	DocsPath: "go-error-direct-comparison.md",
+}
+
+var ErrorStringComparison = check.Check{
+	ID:       "go-error-string-comparison",
+	Title:    "Error inspected by its message string",
+	Severity: check.SeverityWarning,
+	Langs:    []string{"go"},
+	Analyze:  errorStringComparison,
+	Message:  "matching err.Error() text is brittle; use errors.Is/errors.As or a typed error",
+	DocsPath: "go-error-string-comparison.md",
+}
+
+var PanicWithError = check.Check{
+	ID:       "go-panic-with-error",
+	Title:    "Error passed to panic",
+	Severity: check.SeverityWarning,
+	Langs:    []string{"go"},
+	Analyze:  panicWithError,
+	Message:  "panic(err) turns a normal failure into a process crash; return or handle the error unless an invariant is broken",
+	DocsPath: "go-panic-with-error.md",
+}
+
+var DeferInLoop = check.Check{
+	ID:       "go-defer-in-loop",
+	Title:    "defer used inside a loop",
+	Severity: check.SeverityWarning,
+	Langs:    []string{"go"},
+	Analyze:  deferInLoop,
+	Message:  "deferred cleanup runs when the surrounding function returns, so resources accumulate across loop iterations",
+	DocsPath: "go-defer-in-loop.md",
+}
+
+var GoroutineInLoop = check.Check{
+	ID:       "go-goroutine-in-loop",
+	Title:    "Goroutine started inside a loop",
+	Severity: check.SeverityWarning,
+	Langs:    []string{"go"},
+	Analyze:  goroutineInLoop,
+	Message:  "starting goroutines in a loop can create unbounded concurrency; use an explicit limit and cancellation path",
+	DocsPath: "go-goroutine-in-loop.md",
+}
+
+var GetterPrefix = check.Check{
+	ID:       "go-getter-prefix",
+	Title:    "Getter method uses a Get prefix",
+	Severity: check.SeverityInfo,
+	Langs:    []string{"go"},
+	Analyze:  getterPrefix,
+	Message:  "Go getter methods conventionally omit the Get prefix (Name rather than GetName)",
+	DocsPath: "go-getter-prefix.md",
+}
+
+var LargeInterface = check.Check{
+	ID:       "go-large-interface",
+	Title:    "Interface has more than five members",
+	Severity: check.SeverityInfo,
+	Langs:    []string{"go"},
+	Analyze:  largeInterface,
+	Message:  "large interfaces are difficult to implement and mock; define the smallest interface needed by the consumer",
+	DocsPath: "go-large-interface.md",
+}
+
 func init() {
 	check.Register(IgnoredError)
 	check.Register(ExecCommandInjection)
@@ -85,4 +155,11 @@ func init() {
 	check.Register(HTTPClientNoTimeout)
 	check.Register(UncheckedTypeAssertion)
 	check.Register(SQLStringConcat)
+	check.Register(ErrorDirectComparison)
+	check.Register(ErrorStringComparison)
+	check.Register(PanicWithError)
+	check.Register(DeferInLoop)
+	check.Register(GoroutineInLoop)
+	check.Register(GetterPrefix)
+	check.Register(LargeInterface)
 }

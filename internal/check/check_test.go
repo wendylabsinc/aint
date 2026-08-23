@@ -43,6 +43,38 @@ func TestCheckRunNoMatch(t *testing.T) {
 	}
 }
 
+func TestCheckRunUsesSyntaxAnalyzer(t *testing.T) {
+	c := check.Check{
+		ID:       "test-analyzer",
+		Severity: check.SeverityWarning,
+		Message:  "default message",
+		Analyze: func(_ string, _ []byte) []check.Match {
+			return []check.Match{
+				{Line: 2, Column: 3},
+				{Line: 4, Column: 5, Message: "specific message"},
+			}
+		},
+	}
+
+	findings := c.Run("main.go", []byte("package main"), "docs/test.md")
+	if len(findings) != 2 {
+		t.Fatalf("expected 2 findings, got %d", len(findings))
+	}
+	if findings[0].Message != "default message" || findings[0].Line != 2 || findings[0].Column != 3 {
+		t.Errorf("unexpected default finding: %+v", findings[0])
+	}
+	if findings[1].Message != "specific message" || findings[1].Line != 4 || findings[1].Column != 5 {
+		t.Errorf("unexpected specific finding: %+v", findings[1])
+	}
+}
+
+func TestCheckRunWithNoPatternOrAnalyzerIsSafe(t *testing.T) {
+	c := check.Check{ID: "empty"}
+	if findings := c.Run("main.go", nil, ""); len(findings) != 0 {
+		t.Fatalf("expected no findings, got %+v", findings)
+	}
+}
+
 func TestSeverityAtLeast(t *testing.T) {
 	if !check.SeverityError.AtLeast(check.SeverityWarning) {
 		t.Error("error should be at least warning")

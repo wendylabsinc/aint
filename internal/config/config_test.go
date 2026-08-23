@@ -63,10 +63,10 @@ docs_base_url: https://example.com/docs
 func TestIsIgnored(t *testing.T) {
 	cfg := config.Config{Ignore: []string{"vendor/**", "*.pb.go"}}
 	cases := map[string]bool{
-		"vendor/foo/bar.go":  true,
-		"vendor":             true,
-		"pkg/api.pb.go":      true,
-		"pkg/main.go":        false,
+		"vendor/foo/bar.go": true,
+		"vendor":            true,
+		"pkg/api.pb.go":     true,
+		"pkg/main.go":       false,
 	}
 	for path, want := range cases {
 		if got := cfg.IsIgnored(path); got != want {

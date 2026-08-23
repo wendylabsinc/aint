@@ -57,11 +57,15 @@ From then on:
 | `shell-gcp-role-wildcard` | error | shell / `.sh` | `gcloud … add-iam-policy-binding … --role=roles/owner\|editor` |
 | `shell-chmod-permissive` | warning | shell / `.sh` | `chmod 777` / `a+rwx` / `ugo+rwx` |
 | `go-ignored-error` | warning | `.go` | `_ = err` silently discarding an error |
+| `go-error-direct-comparison` | warning | `.go` | Direct error comparisons that miss wrapped errors |
+| `go-error-string-comparison` | warning | `.go` | Brittle control flow based on `err.Error()` text |
+| `go-defer-in-loop` | warning | `.go` | Deferred cleanup accumulating across loop iterations |
+| `go-goroutine-in-loop` | warning | `.go` | Potentially unbounded goroutine creation |
 | `swift-force-unwrap` | warning | `.swift` | `try!` / `as!` |
 | `python-shell-true` | warning | `.py` | `subprocess.*(shell=True)` |
 | `node-eval` | warning | `.js` / `.ts` | `eval(…)` |
 
-This table shows a representative sample - run `aint list` for the full, current set (65 checks as of this batch, across secrets, shell/cloud IAM, Go, Swift, Python, Node.js, SQL, and YAML). See `docs/checks/<id>.md` for the full explanation and fix for each one.
+This table shows a representative sample - run `aint list` for the full, current set across secrets, shell/cloud IAM, Go, Swift, Python, Node.js, SQL, and YAML. See `docs/checks/<id>.md` for the full explanation and fix for each one.
 
 ## Configuration
 

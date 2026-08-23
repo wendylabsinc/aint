@@ -1,14 +1,13 @@
 # .aint.yaml — example configuration for aint.
 # Delete or edit freely; aint runs with sane defaults if this file is absent.
 
-fail_on: error   # info|warning|error — findings at/above this exit non-zero
-                 # note: several seed checks default to `warning` severity and won't
-                 # fail a check run on their own unless overridden here or fail_on
-                 # is lowered to `warning`
+fail_on: warning # info|warning|error — findings at/above this exit non-zero
 
 ignore:
   - vendor/**
   - node_modules/**
+  # Local build artifact; source files are scanned separately.
+  - aint
   - "*.pb.go"
   # aint dogfoods itself (`aint check .` in this repo). These paths
   # intentionally contain literal "bad" examples to test/document the

@@ -104,3 +104,134 @@ func TestSQLStringConcatIgnoresParameterizedQuery(t *testing.T) {
 		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
 	}
 }
+
+func TestErrorDirectComparisonDetectsSentinelComparison(t *testing.T) {
+	content := []byte("package p\nfunc f(err error) { if err == io.EOF {} }")
+	findings := golang.ErrorDirectComparison.Run("main.go", content, "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestErrorDirectComparisonAllowsNilCheck(t *testing.T) {
+	content := []byte("package p\nfunc f(err error) { if err != nil {} }")
+	findings := golang.ErrorDirectComparison.Run("main.go", content, "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestErrorStringComparisonDetectsEqualityAndContains(t *testing.T) {
+	content := []byte(`package p
+func f(err error) {
+	_ = err.Error() == "not found"
+	_ = strings.Contains(err.Error(), "timeout")
+}`)
+	findings := golang.ErrorStringComparison.Run("main.go", content, "")
+	if len(findings) != 2 {
+		t.Fatalf("expected 2 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestErrorStringComparisonAllowsErrorsIs(t *testing.T) {
+	content := []byte("package p\nfunc f(err error) { _ = errors.Is(err, io.EOF) }")
+	findings := golang.ErrorStringComparison.Run("main.go", content, "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestPanicWithErrorDetectsErrorValues(t *testing.T) {
+	content := []byte(`package p
+func f(err error) {
+	panic(err)
+	panic(fmt.Errorf("broken: %w", err))
+}`)
+	findings := golang.PanicWithError.Run("main.go", content, "")
+	if len(findings) != 2 {
+		t.Fatalf("expected 2 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestPanicWithErrorAllowsInvariantMessage(t *testing.T) {
+	content := []byte(`package p
+func f() { panic("unreachable") }`)
+	findings := golang.PanicWithError.Run("main.go", content, "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestDeferInLoopDetectsRangeAndForLoops(t *testing.T) {
+	content := []byte(`package p
+func f(items []string) {
+	for range items { defer closeOne() }
+	for i := 0; i < 1; i++ { defer closeTwo() }
+}`)
+	findings := golang.DeferInLoop.Run("main.go", content, "")
+	if len(findings) != 2 {
+		t.Fatalf("expected 2 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestDeferInLoopAllowsPerIterationFunction(t *testing.T) {
+	content := []byte(`package p
+func f(items []string) {
+	for range items { func() { defer closeOne() }() }
+}`)
+	findings := golang.DeferInLoop.Run("main.go", content, "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGoroutineInLoopDetectsUnboundedPattern(t *testing.T) {
+	content := []byte(`package p
+func f(items []string) {
+	for _, item := range items { go process(item) }
+}`)
+	findings := golang.GoroutineInLoop.Run("main.go", content, "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGoroutineInLoopIgnoresNestedFunctionBody(t *testing.T) {
+	content := []byte(`package p
+func f(items []string) {
+	for range items { funcs = append(funcs, func() { go process() }) }
+}`)
+	findings := golang.GoroutineInLoop.Run("main.go", content, "")
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestGetterPrefixDetectsConventionalGetter(t *testing.T) {
+	content := []byte(`package p
+type User struct{}
+func (User) GetName() string { return "" }
+func (User) Get(name string) string { return name }
+func (User) Name() string { return "" }`)
+	findings := golang.GetterPrefix.Run("main.go", content, "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestLargeInterfaceDetectsMoreThanFiveMembers(t *testing.T) {
+	content := []byte(`package p
+type Small interface { A(); B(); C(); D(); E() }
+type Large interface { A(); B(); C(); D(); E(); F() }`)
+	findings := golang.LargeInterface.Run("main.go", content, "")
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %+v", len(findings), findings)
+	}
+}
+
+func TestSyntaxChecksIgnoreIncompleteGo(t *testing.T) {
+	findings := golang.DeferInLoop.Run("main.go", []byte("not valid Go"), "")
+	if len(findings) != 0 {
+		t.Fatalf("expected parse failures to produce no findings, got %+v", findings)
+	}
+}
