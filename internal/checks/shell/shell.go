@@ -172,7 +172,6 @@ func init() {
 	check.Register(DockerPrivileged)
 	check.Register(GCPServiceAccountKeyDownload)
 	check.Register(DisableHostFirewall)
-	check.Register(GrepSearchCodebase)
 	check.Register(GitAddBroad)
 	check.Register(GitCheckoutSharedWendyosTree)
 	check.Register(PsqlInlineSQLVariable)

@@ -1,5 +1,8 @@
 # shell-grep-search-codebase
 
+This check is disabled and is no longer registered. Shell searches with `grep`
+and `rg` are allowed.
+
 **Flags:** shelling out to `grep -r`/`grep -l`/`grep --include`/`rg` to search a
 codebase, instead of using the editor's dedicated search tool.
 
