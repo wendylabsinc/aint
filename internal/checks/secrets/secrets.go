@@ -3,6 +3,7 @@ package secrets
 
 import (
 	"regexp"
+	"strings"
 
 	"aint/internal/check"
 )
@@ -58,9 +59,29 @@ var HighEntropyString = check.Check{
 	ID:       "secret-high-entropy-string",
 	Title:    "High-entropy string literal",
 	Severity: check.SeverityInfo,
-	Pattern:  regexp.MustCompile(`["'][A-Za-z0-9+/]{40,}={0,2}["']`),
+	Analyze:  highEntropyStrings,
 	Message:  "long, high-entropy-looking string literal — verify this isn't a leaked credential",
 	DocsPath: "secret-high-entropy-string.md",
+}
+
+var highEntropyLiteralPattern = regexp.MustCompile(`["'][A-Za-z0-9+/]{40,}={0,2}["']`)
+var gitObjectIDPattern = regexp.MustCompile(`^(?:[A-Fa-f0-9]{40}|[A-Fa-f0-9]{64})$`)
+
+func highEntropyStrings(_ string, content []byte) []check.Match {
+	var matches []check.Match
+	for i, line := range strings.Split(string(content), "\n") {
+		for _, loc := range highEntropyLiteralPattern.FindAllStringIndex(line, -1) {
+			value := line[loc[0]+1 : loc[1]-1]
+			// Full SHA-1 and SHA-256 Git object IDs are common non-secret
+			// literals. Explicit credential assignments are checked separately.
+			if gitObjectIDPattern.MatchString(value) {
+				continue
+			}
+			matches = append(matches, check.Match{Line: i + 1, Column: loc[0] + 1})
+			break // Preserve one finding per line, after any ignored hashes.
+		}
+	}
+	return matches
 }
 
 func init() {
